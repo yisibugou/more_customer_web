@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/properties.js"></script>
+		<script src="../js/mui.pullToRefresh.js"></script>
+		<script src="../js/mui.pullToRefresh.material.js"></script>
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<style>
+			html,body {
+				background-color: #efeff4;
+			}
+			.choosed {
+				
+			}
+			[v-cloak] {
+				display: none !important;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="app" v-cloak>
+			<!-- <header class="mui-bar mui-bar-nav">
+				<h1 class="mui-title">短信任务列表</h1>
+			</header> -->
+			<div style="z-index: 1; background: #EFEFF4; display:flex; width:100%; padding:10px; font-size:17px; font-weight: 600; position: fixed; top: 0; height: 50px;">
+				<div v-on:click="getSmsTaskList(0)" v-bind:style="{ borderBottom: status == 0 ? '2px solid #CF4842' : '' }" style=" padding-bottom: 5px; width: 50%; text-align: center;">
+					待完成
+				</div>
+				<div v-on:click="getSmsTaskList(1)" v-bind:style="{ borderBottom: status == 1 ? '2px solid #CF4842' : '' }" style="width: 50%; text-align: center; padding-bottom: 5px;">
+					已完成
+				</div>
+			</div>
+			<div id="pullrefresh" class="mui-content mui-scroll-wrapper" style="margin-top: 50px; margin-bottom: 30px; width: 100%; overflow: scroll;">
+				<div class="mui-scroll">
+					<div class="order_list"  style="display: flex; flex-direction: column; width: 100%; align-items: center; overflow: scroll;">
+						<div v-for="(smsTask, index) in smsTaskList" v-on:click="getDetail(index)" class="smsTask" style="margin-top: 10px; display: flex; width: 95%; background: white; border-radius: 8px; padding: 5px; box-sizing: border-box; align-items: center;">
+							<div style="width: 30%; box-sizing: border-box; padding-right: 10px; text-align: center;">
+								<div>{{ smsTask.name }}</div>
+							</div>
+							<div style="width: 30%; box-sizing: border-box; padding-right: 10px; display: flex; flex-direction: column; font-size: 14px; align-items: center;">
+								{{ smsTask.region }}
+							</div>
+							<div v-bind:style="{ color: status == 0 ? 'red' : 'green' }" style="width: 15%; display: flex; flex-direction: column; align-items: center;">
+								<div style="font-size: 14px;">
+									{{ status == 0 ? '待发' : '已发' }}
+								</div>
+								<div >
+									{{ status == 0 ? (smsTask.totalCount - smsTask.sendCount) : smsTask.sendCount }}
+								</div>
+										
+							</div>
+							<div style="width: 25%; display: flex; flex-direction: column; align-items: center; font-size: 14px;">
+								<div>
+									{{ smsTask.createdTime.substring(0, 10) }}
+								</div>
+								<div>
+									{{ smsTask.createdTime.substring(11, 19) }}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+
+	<script>
+		
+		
+		var app = new Vue({
+			el: '#app',
+			data: {
+				smsTaskList: [],
+				status: 0
+			},
+			methods: {
+				getDetail: function(i) {
+					var w = plus.webview.create('smsTaskDetail.html', 'new', {}, { "smsTask": app.smsTaskList[i] });
+					w.show("slide-in-right");
+				},
+				getSmsTaskList: function(status) {
+					app.status = status;
+					app.smsTaskList = [];
+					plus.nativeUI.showWaiting("加载中...");
+					axios({
+						method: "POST",
+						url: server + "/contact/getSmsTaskList",
+						data: {
+							status: app.status
+						},
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.getItem("token")
+						}
+					}).then(function(res) {
+						app.smsTaskList = res.data.data;
+						plus.nativeUI.closeWaiting();
+					});
+				}
+			}
+		});
+		
+		mui.plusReady(function() {
+			app.getSmsTaskList(0);
+		
+			window.addEventListener('refresh', function(e){
+				app.getSmsTaskList(1);
+			});
+			
+		})
+		mui.init({
+			// swipeBack: true, //启用右滑关闭功能
+			// pullRefresh: {
+			// 	container: "#pullrefresh",//待刷新区域标识，querySelector能定位的css选择器均可，比如：id、.class等
+			// 	up: {
+			// 		height: 50,//可选.默认50.触发上拉加载拖动距离
+			// 		auto: true,//可选,默认false.自动上拉加载一次
+			// 		contentrefresh : "正在加载...",//可选，正在加载状态时，上拉加载控件上显示的标题内容
+			// 		contentnomore: '没有更多数据了',//可选，请求完毕若没有更多数据时显示的提醒内容；
+			// 		callback: function() {
+			// 			var newData = new Array();
+			// 			for(var i = app.smsTaskList.length + 1; i < app.smsTaskList.length + 10; ++i) {
+			// 				var taskJson = 	{
+			// 					"name": "家具短信" + i,
+			// 					"province": "山东省",
+			// 					"city": "青岛市",
+			// 					"district": "李沧区",
+			// 					"noSendNum": 1000,
+			// 					"totalNum": 1000
+			// 				}
+			// 				newData.push(taskJson);
+			// 			}
+			// 			app.smsTaskList = app.smsTaskList.concat(newData);
+			// 			mui('#pullrefresh').pullRefresh().endPullupToRefresh(false);
+			// 			// self.endPullUpToRefresh(false);
+			// 		}//必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+			// 	}				
+			// }
+		});
+		
+	</script>
+</html>

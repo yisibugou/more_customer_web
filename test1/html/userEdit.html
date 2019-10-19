@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/properties.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/mui.picker.js"></script>
+		<script src="../js/mui.poppicker.js"></script>
+		<script src="../js/mui.picker.min.js"></script>
+		<script src="../js/city.data.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../js/city.data-3.js" type="text/javascript" charset="utf-8"></script>
+		
+		<link href="../css/mui.min.css" rel="stylesheet">
+		<link href="../css/mui.picker.css" rel="stylesheet" />
+		<link href="../css/mui.poppicker.css" rel="stylesheet" />
+		<link href="../css/mui.picker.min.css" rel="stylesheet"/>
+		<style>
+			html,body {
+				background-color: #efeff4;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a  class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">个人信息</h1>
+		</header>
+		<div id="app" class="mui-content" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+			<div style="width: 100%; display: flex; flex-direction: column; padding-left: 10px; box-sizing: border-box; background: white;">
+				<div style="display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: center; justify-content: space-between; padding: 7px 5px; padding-right: 20px;">
+					<div>
+						头像
+					</div>
+					<div style="display: flex; align-items: center;">
+						<div style="width: 65px; height: 65px;">
+							<img v-bind:src="head" style="width: 100%; height: 100%; border-radius: 7px;"/>
+						</div>
+						
+					</div>
+				</div>
+				
+				<div style="display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: center; justify-content: space-between; padding: 15px 5px;  padding-right: 20px;">
+					<div>
+						名称
+					</div>
+					<div style="display: flex; align-items: center;">
+						<input type="text" v-model="name" style="border: none; margin: 0; padding: 0; text-align: right;"/>
+					
+					</div>
+				</div>
+				
+				<div style="display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: center; justify-content: space-between; padding: 15px 5px; padding-right: 20px;">
+					<div>
+						性别
+					</div>
+					<div style="display: flex; align-items: center;">
+						<input id="sexPicker" type="text" v-model="sex.text" style="border: none; margin: 0; padding: 0; text-align: right;"/>
+					</div>
+				</div>
+				
+				<div style="display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: center; justify-content: space-between; padding: 15px 5px; padding-right: 20px;">
+					<div>
+						地区
+					</div>
+					<div style="display: flex; align-items: center;">
+						<input id="cityPicker" readonly="readonly" type="text" v-model="region.text" style="border: none; margin: 0; padding: 0; text-align: right;"/>
+					</div>
+				</div>
+				<div style="display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: center; justify-content: space-between; padding: 15px 5px;  padding-right: 20px;">
+					<div>
+						行业
+					</div>
+					<div style="display: flex; align-items: center;">
+						<input id="industryPicker" readonly="readonly" type="text" v-model="industry.text" style="border: none; margin: 0; padding: 0; text-align: right;"/>
+						
+					</div>
+				</div>
+				<div style="display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: center; justify-content: space-between; padding: 15px 5px;  padding-right: 20px;">
+					<div>
+						生日
+					</div>
+					<div style="display: flex; align-items: center;">
+						<input id="birthdayPicker" readonly="readonly" type="text" v-model="birthday" style="border: none; margin: 0; padding: 0; text-align: right;"/>
+					</div>
+				</div>
+				
+			</div>
+			
+			<div v-on:click="updateUser()" style="text-align: center; background: #F20037;  width: 80%; color: white; padding: 10px 0; font-size: 18px; border-radius: 18px; margin-top: 30px; ">
+				修改
+			</div>
+		</div>
+	</body>
+
+	<script>
+		var app = new Vue({
+			el: '#app',
+			data: {
+				head: "",
+				name: "",
+				sex: {
+					"val": 1,
+					"text": "男"
+				},
+				birthday: "",
+				industry: {
+					"val": "",
+					"text": ""
+				},
+				region: {
+					"text": "",
+					"province": "",
+					"city": "",
+					"district": ""
+				},
+				industryList: []
+			},
+			methods: {
+				getIndustryList: function() {
+					var that = this;
+					axios({
+						method: "POST",
+						url: server + "/industry/getIndustryList",
+						data: {},
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.getItem("token")
+						}
+					}).then(function(res) {
+						app.industryList = res.data.data;
+						for(var i = 0; i < app.industryList.length; ++i) {
+							that.$set(app.industryList[i], "text", app.industryList[i].name);
+							for(var j = 0; j < app.industryList[i].secondIndustryViewList.length; ++j) {
+								that.$set(app.industryList[i].secondIndustryViewList[j], "text", app.industryList[i].secondIndustryViewList[j].name);
+							}
+							that.$set(app.industryList[i], "children", app.industryList[i].secondIndustryViewList);
+						}
+						
+						var industryPicker = new mui.PopPicker({layer: 2}); 
+						industryPicker.setData(app.industryList); 
+						var showIndustryPickerButton = document.getElementById("industryPicker");
+						showIndustryPickerButton.addEventListener('tap', function(event) {
+							industryPicker.show(function(items) {
+								app.industry = items[1];
+							});
+						}, false);
+					});
+				},
+				updateUser: function() {
+					plus.nativeUI.showWaiting("修改中...");
+					axios({
+						method: "POST",
+						url: server + "/user/updateUserInfo",
+						data: {
+							"name": app.name,
+							"sex": app.sex.val,
+							"province": app.region.province,
+							"city": app.region.city,
+							"district": app.region.district,
+							"birthday": app.birthday,
+							"secondIndustryId": app.industry.id
+						},
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.getItem("token")
+						}
+					}).then(function(res) {
+						plus.nativeUI.closeWaiting();
+						if(res.data.success) {
+							mui.toast("修改成功！");
+							var user = JSON.parse(localStorage.getItem("userStr"));
+							user.name = app.name;
+							user.sex = app.sex.val;
+							user.province = app.region.province;
+							user.city = app.region.city;
+							user.district = app.region.district;
+							user.birthday = app.birthday;
+							user.secondIndustryId = app.industry.id;
+							user.secondIndustryName = app.industry.text;
+							localStorage.setItem("userStr", JSON.stringify(user));
+						}
+						var thisWb = plus.webview.currentWebview();
+						var tnavBack = thisWb.opener();
+						//A页面执行abc事件
+						mui.fire(tnavBack, "updateUserSuccess", {}); 
+						thisWb.close();
+					});
+				}
+			}
+		});
+		
+		mui.init({
+			swipeBack: true,
+		});
+		mui.plusReady(function  () {
+			var user = JSON.parse(localStorage.getItem("userStr"));
+			app.head = user.head;
+			app.region.text = user.province + ' ' + user.city + " " + user.district;
+			app.region.province = user.province;
+			app.region.city = user.city;
+			app.region.district = user.district;
+			app.sex.text = user.sex == 1 ? '男' : '女';
+			app.sex.val = user.sex;
+			app.birthday = user.birthday;
+			app.name = user.name;
+			app.industry.text = user.secondIndustryName;
+			
+			app.getIndustryList();
+			
+			var cityPicker3 = new mui.PopPicker({
+				layer: 3
+			});
+			cityPicker3.setData(cityData3);
+			var showCityPickerButton = document.getElementById('cityPicker');
+			showCityPickerButton.addEventListener('tap', function(event) {
+				cityPicker3.show(function(items) {
+					app.region.text = items[0].text + ' ' + items[1].text + ' ' + items[2].text;
+					app.region.province = items[0].text;
+					app.region.city = items[1].text;
+					app.region.district = items[2].text;
+				});
+			}, false);
+			
+			var sexPicker = new mui.PopPicker(); 
+			sexPicker.setData([{val: 1, text: "男"}, {val: 2, text: "女"}]); 
+			var showSexPickerButton = document.getElementById('sexPicker');
+			showSexPickerButton.addEventListener('tap', function(event) {
+				sexPicker.show(function(items) {
+					app.sex = items[0];
+				});
+			}, false);
+			
+			var birthdayPicker = new mui.DtPicker({type: "date"}); 
+			var showBirthdayPickerButton = document.getElementById('birthdayPicker');
+			showBirthdayPickerButton.addEventListener('tap', function(event) {
+				birthdayPicker.show(function(items) {
+					app.birthday = items.y.text + "-" + items.m.text + "-" + items.d.text;
+				});
+			}, false);
+		})
+	</script>
+</html>

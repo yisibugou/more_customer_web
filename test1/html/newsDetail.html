@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/mui.pullToRefresh.js"></script>
+		<script src="../js/mui.pullToRefresh.material.js"></script>
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<style>
+			html,body {
+				background-color: #efeff4;
+			}
+			.choosed {
+				
+			}
+			pre {
+white-space: pre-wrap;
+word-wrap: break-word;
+}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a  class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">短信明细</h1>
+		</header>
+		<div id="app" class="mui-content" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+			<pre>做一个贪恋感情的人☽你好,我是牙疼小姐仅仅因为懒得吵，或者面子问题闹到分手的结局，太不值得了。吵完架，主动低头认错，然后给对方一个结结实实的拥抱，不也很好吗？以前觉得，谈恋爱，一定要找一个百分百对自己好的人。体贴、温柔的人真的很讨喜呀，他愿意包容
+
+发布时间：2019-04-16 | 阅读：8 | 标签：去吃 早餐 吵完架
+</pre>
+
+		</div>
+	</body>
+
+	<script>
+		var app = new Vue({
+			el: '#app',
+			data: {
+				server: "http://localhost:8080",
+				smsTemp: {
+					"id": 1,
+					"name": "短信模板1",
+					"content": "短信内容短信内容短信内容短信内容短信内容短信内容短信内容短信内容短信内容短信内容短信内容短信内容",
+					"sign": "短信签名"
+				},
+				smsTaskDetailList: [
+					{
+						"name": "中瑞汽车服务有限公司",
+						"addr": "山东省青岛市李沧区亚马逊AWS联合创新中心23层",
+						"phone": "13121061770",
+						"isChoosed" : true
+					},
+					{
+						"name": "中瑞汽车服务有限公司",
+						"addr": "山东省青岛市李沧区亚马逊AWS联合创新中心23层",
+						"phone": "13121061770",
+						"isChoosed" : true
+					},
+					{
+						"name": "中瑞汽车服务有限公司",
+						"addr": "山东省青岛市李沧区亚马逊AWS联合创新中心23层",
+						"phone": "13121061770",
+						"isChoosed" : true
+					},
+					{
+						"name": "中瑞汽车服务有限公司",
+						"addr": "山东省青岛市李沧区亚马逊AWS联合创新中心23层",
+						"phone": "13121061770",
+						"isChoosed" : true
+					},
+					{
+						"name": "中瑞汽车服务有限公司",
+						"addr": "山东省青岛市李沧区亚马逊AWS联合创新中心23层",
+						"phone": "13121061770",
+						"isChoosed" : true
+					},
+					{
+						"name": "中瑞汽车服务有限公司",
+						"addr": "山东省青岛市李沧区亚马逊AWS联合创新中心23层",
+						"phone": "13121061770",
+						"isChoosed" : true
+					}
+				]
+			},
+			methods: {
+				choose: function(i) {
+					app.smsTaskDetailList[i].isChoosed = !app.smsTaskDetailList[i].isChoosed;
+				},
+				getSmsTempList: function() {
+					var w = plus.webview.create('smsTempList.html', 'new', {}, {tempId: app.smsTemp.id});
+					w.show("slide-in-right");
+				}
+			}
+		});
+		
+		mui.init({
+			swipeBack: true, //启用右滑关闭功能
+			pullRefresh: {
+				container: "#pullrefresh",//待刷新区域标识，querySelector能定位的css选择器均可，比如：id、.class等
+				up: {
+					height: 50,//可选.默认50.触发上拉加载拖动距离
+					auto: true,//可选,默认false.自动上拉加载一次
+					contentrefresh : "正在加载...",//可选，正在加载状态时，上拉加载控件上显示的标题内容
+					contentnomore: '没有更多数据了',//可选，请求完毕若没有更多数据时显示的提醒内容；
+					callback: function() {
+						var newData = new Array();
+						for(var i = app.smsTaskDetailList.length + 1; i < app.smsTaskDetailList.length + 10; ++i) {
+							var taskJson = 	{
+								"name": "中瑞汽车服务有限公司" + i,
+								"addr": "山东省青岛市李沧区亚马逊AWS联合创新中心23层",
+								"phone": "13121061770",
+								"isChoosed" : false
+							}
+							newData.push(taskJson);
+						}
+						app.smsTaskDetailList = app.smsTaskDetailList.concat(newData);
+						mui('#pullrefresh').pullRefresh().endPullupToRefresh(false);
+						// self.endPullUpToRefresh(false);
+					}//必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+				}
+			}
+		});
+		mui.plusReady(function  () {
+			// mui.toast(plus.webview.currentWebview().name);
+		})
+	</script>
+</html>

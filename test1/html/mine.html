@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/mui.pullToRefresh.js"></script>
+		<script src="../js/mui.pullToRefresh.material.js"></script>
+		<script src="../js/properties.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<style>
+			html,body {
+				background-color: white;
+				width: 100%;
+			}
+			
+			#head {
+				height: 170px;
+				width: 100%;
+				background: -webkit-linear-gradient(#F20037, #B40020); /* Safari 5.1 - 6.0 */
+				background: -o-linear-gradient(#F20037, #B40020); /* Opera 11.1 - 12.0 */
+				background: -moz-linear-gradient(#F20037, #B40020); /* Firefox 3.6 - 15 */
+				background: linear-gradient(#F20037, #B40020); /* 标准的语法（必须放在最后） */
+				border-bottom-left-radius: 30px;
+				border-bottom-right-radius: 30px;
+				display: flex;
+			}
+			
+			.gradual-change {
+				background: -webkit-linear-gradient(#F20037, #B40020); /* Safari 5.1 - 6.0 */
+				background: -o-linear-gradient(#F20037, #B40020); /* Opera 11.1 - 12.0 */
+				background: -moz-linear-gradient(#F20037, #B40020); /* Firefox 3.6 - 15 */
+				background: linear-gradient(#F20037, #B40020); /* 标准的语法（必须放在最后） */
+			}
+			
+			[v-cloak] {
+				display: none !important;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="app" v-cloak>
+			<div class="mui-content" style="display: flex; flex-direction: column; align-items: center; width: 100%; background: white;">
+				<div style="width: 100%;  display: flex; flex-direction: column; align-items: center; border-bottom: 5px solid #D7D7D7;">
+					<div id="head">
+						<div style="margin-left: 20px; margin-top: 30px; width: 76px; height: 76px; border-radius: 38px; background: white; display: flex; align-items: center; justify-content: center;">
+							<div style="width: 70px; height: 70px; border-radius: 35px; overflow: hidden; ">
+								<img v-bind:src="user.head" style="width: 100%; height: 100%;"/>
+							</div>
+						</div>
+						<div style="width: 25%; display: flex; flex-direction: column; margin-top: 50px; margin-left: 12px; align-items: center;">
+							<div style="font-size: 25px; color: white;">
+								{{ user.name }}
+							</div>
+							<div style="font-size: 14px; color: red; font-weight: 700; background: white; border-radius: 4px; padding: 0 3px; margin-top: 5px;">
+								{{ user.vip == 1 ? '超级会员' : '普通用户' }}
+							</div>
+						</div>
+						<div style="width: 2px; height: 70px; background: white;  margin-top: 40px; "></div>
+						<div style="display: flex; flex-direction: column; align-items: flex-start; color: white; font-size: 14px; margin-top: 43px; margin-left: 6px;">
+							<div>
+								{{ user.secondIndustryName }}
+							</div>
+							<div>
+								{{ user.province + user.city + user.district }}
+							</div>
+							<div v-if="user.vip == 1" style="font-size: 12px;">
+								{{ user.vipStartTime + ' ~ ' + user.vipEndTime }}
+							</div>
+						</div>
+					</div>
+					
+					<div style="display: flex; align-items: center; justify-content: space-around; width: 80%; height: 100px; background: white; margin-top: -20px; border-radius: 15px;-moz-box-shadow:0px 0px 5px #333333; -webkit-box-shadow:0px 0px 5px #333333; box-shadow:0px 0px 5px #333333;">
+						<div style="display: flex; flex-direction: column; align-items: center;">
+							<div style="font-size: 15px; font-weight: 800; color: red;">
+								剩余积分
+							</div>
+							<div style="font-size: 22px; font-weight: 700; color: #FF981A; margin: 5px 0;">
+								{{ user.credit }}
+							</div>
+							<div v-on:click="rechargeCredit()" style="background: red; color: white; border-radius: 5px; padding: 4px; font-size: 13px;">
+								去充值
+							</div>
+						</div>
+						<div style="display: flex; flex-direction: column; align-items: center;">
+							<div style="font-size: 15px; font-weight: 800; color: red;">
+								可提现
+							</div>
+							<div style="font-size: 22px; font-weight: 700; color: #FF981A; margin: 5px 0;">
+								{{ user.moneyCanGet }}
+							</div>
+							<div style="background: red; color: white; border-radius: 5px; padding: 4px; font-size: 13px;">
+								去提现
+							</div>
+						</div>
+						<div style="display: flex; flex-direction: column; align-items: center;">
+							<div style="font-size: 15px; font-weight: 800; color: red;">
+								已提现
+							</div>
+							<div style="font-size: 22px; font-weight: 700; color: #FF981A; margin: 5px 0;">
+								{{ user.moneyHaveGet }}
+							</div>
+							<div style="background: red; color: white; border-radius: 5px; padding: 4px; font-size: 13px;">
+								去赚钱
+							</div>
+						</div>
+					</div>
+					<div style="width: 85%; height: 100px; display: flex; align-items: center; justify-content: space-between; color: white;">
+						<div v-on:click="editUser()" class="gradual-change" style="display: flex; flex-direction: column; align-items: center; padding: 8px; border-radius: 5px;">
+							<div style="font-weight: 700;">
+								资料完善
+							</div>
+							<div style="font-size: 11px;">
+								当前已完成80%
+							</div>
+						</div>
+						<div class="gradual-change" style="display: flex; flex-direction: column; align-items: center; padding: 8px; border-radius: 5px;">
+							<div style="font-weight: 700;">
+								拓客历史
+							</div>
+							<div style="font-size: 11px;">
+								当前已完成80%
+							</div>
+						</div>
+						<div class="gradual-change" style="display: flex; flex-direction: column; align-items: center; padding: 8px; border-radius: 5px;">
+							<div style="font-weight: 700;">
+								任务中心
+							</div>
+							<div style="font-size: 11px;">
+								当前已完成80%
+							</div>
+						</div>
+					</div>
+				</div>
+				<div style="width: 100%; display: flex; flex-direction: column; background: white;  padding: 0 10px; box-sizing: border-box; margin-top: 10px; margin-bottom: 10px; border-bottom: 5px solid #D7D7D7;">
+				
+					<div style="padding: 13px 0; display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: flex-start;  justify-content: space-between;">
+						<div style="display: flex; align-items: center;">
+							<div style="width: 16px; height: 16px; border-radius: 8px; background: red;">
+							</div>
+							<div style="margin-left: 30px; color: gray; font-weight: 700; font-size: 15px;">
+								邀请会员
+							</div>
+						</div>
+						<div style="width: 15px; height: 15px;">
+							<img src="../images/youjiantou.png" style="width: 100%; height: 100%;"/>
+						</div>
+					</div>
+					<div v-on:click="addCooperation(1)"  style="padding: 13px 0; display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: flex-start;  justify-content: space-between;">
+						<div style="display: flex; align-items: center;">
+							<div style="width: 16px; height: 16px; border-radius: 8px; background: red;">
+							</div>
+							<div style="margin-left: 30px; color: gray; font-weight: 700; font-size: 15px;">
+								商务合作
+							</div>
+						</div>
+						<div style="width: 15px; height: 15px;">
+							<img src="../images/youjiantou.png" style="width: 100%; height: 100%;"/>
+						</div>
+					</div>
+					<div  v-on:click="addCooperation(2)" style="padding: 13px 0; display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: flex-start;  justify-content: space-between;">
+						<div style="display: flex; align-items: center;">
+							<div style="width: 16px; height: 16px; border-radius: 8px; background: red;">
+							</div>
+							<div style="margin-left: 30px; color: gray; font-weight: 700; font-size: 15px;">
+								代理商入口
+							</div>
+						</div>
+						<div style="width: 15px; height: 15px;">
+							<img src="../images/youjiantou.png" style="width: 100%; height: 100%;"/>
+						</div>
+					</div>
+				</div>
+				
+				<div style="width: 100%; display: flex; flex-direction: column; background: white;  padding: 0 10px; box-sizing: border-box; margin-bottom: 50px;">
+					<div style="padding: 13px 0; display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: flex-start;  justify-content: space-between;">
+						<div style="display: flex; align-items: center;">
+							<div style="width: 16px; height: 16px; border-radius: 8px; background: red;">
+							</div>
+							<div style="margin-left: 30px; color: gray; font-weight: 700; font-size: 15px;">
+								帮助中心
+							</div>
+						</div>
+						<div style="width: 15px; height: 15px;">
+							<img src="../images/youjiantou.png" style="width: 100%; height: 100%;"/>
+						</div>
+					</div>
+					<div v-on:click="addSuggestion" style="padding: 13px 0; display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: flex-start;  justify-content: space-between;">
+						<div style="display: flex; align-items: center;">
+							<div style="width: 16px; height: 16px; border-radius: 8px; background: red;">
+							</div>
+							<div style="margin-left: 30px; color: gray; font-weight: 700; font-size: 15px;">
+								问题反馈
+							</div>
+						</div>
+						<div style="width: 15px; height: 15px;">
+							<img src="../images/youjiantou.png" style="width: 100%; height: 100%;"/>
+						</div>
+					</div>
+					<div style="padding: 13px 0; display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: flex-start;  justify-content: space-between;">
+						<div style="display: flex; align-items: center;">
+							<div style="width: 16px; height: 16px; border-radius: 8px; background: red;">
+							</div>
+							<div style="margin-left: 30px; color: gray; font-weight: 700; font-size: 15px;">
+								设置
+							</div>
+						</div>
+						<div style="width: 15px; height: 15px;">
+							<img src="../images/youjiantou.png" style="width: 100%; height: 100%;"/>
+						</div>
+					</div>
+					<div v-on:click="logout()" style="padding: 13px 0; display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: flex-start;  justify-content: space-between;">
+						<div style="display: flex; align-items: center;">
+							<div style="width: 16px; height: 16px; border-radius: 8px; background: red;">
+							</div>
+							<div style="margin-left: 30px; color: gray; font-weight: 700; font-size: 15px;">
+								退出
+							</div>
+						</div>
+						<div style="width: 15px; height: 15px;">
+							<img src="../images/youjiantou.png" style="width: 100%; height: 100%;"/>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+		</div>
+		
+	</body>
+
+	<script>
+		mui.init({
+			swipeBack: true
+		});
+	
+		var app = new Vue({
+			el: '#app',
+			data: {
+				title: "",
+				user: {}
+			},
+			methods: {
+				editUser: function() {
+					var w = plus.webview.create('userEdit.html', 'userEdit', {}, {});
+					w.show("slide-in-right");
+				},
+				becomeVIP: function() {
+					var w = plus.webview.create('becomeVIP.html', 'becomeVIP', {}, {});
+					w.show("slide-in-right");
+				},
+				rechargeCredit: function() {
+					var w = plus.webview.create('rechargeCredit.html', 'rechargeCredit', {}, {});
+					w.show("slide-in-right");
+				},
+				logout: function() {
+					mui.confirm("确定要退出吗？", "", ['否', '是'], function(e) {
+						if (e.index == 1) {
+							localStorage.removeItem("token");
+							var w = plus.webview.create('login.html', 'login', {}, {});
+							w.show("slide-in-right");
+						}
+					})
+				},
+				addSuggestion: function() {
+					var w = plus.webview.create('suggestion.html', 'suggestion', {}, {});
+					w.show("slide-in-right");
+				},
+				addCooperation: function(type) {
+					var w = plus.webview.create('cooperation.html', 'cooperation', {}, { "type": type });
+					w.show("slide-in-right");
+				},
+				getUserInfo: function() {
+					axios({
+						method: "POST",
+						url: server + "/user/getUserInfo",
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.token
+						}
+					}).then(function(res) {
+						app.user = res.data.data;
+						var userStr =  JSON.stringify(app.user);
+						localStorage.setItem("userStr", userStr);
+					});
+				}
+			}
+		});
+		mui.plusReady(function() {
+			// app.getUserInfo();
+			app.user = JSON.parse(localStorage.getItem("userStr"));
+			
+			plus.webview.currentWebview().addEventListener("show", function(){  
+				app.user = JSON.parse(localStorage.getItem("userStr"));
+			}, false);  
+			
+			// 登录成功
+			window.addEventListener('loginSuccess', function(e){
+				app.user = JSON.parse(localStorage.getItem("userStr"));
+			}); 
+			
+			// 修改信息成功
+			window.addEventListener('updateUserSuccess', function(e){
+				app.user = JSON.parse(localStorage.getItem("userStr"));
+			}); 
+			
+			// 充值结束
+			window.addEventListener('rechargeCreditDone', function(e){
+				app.user = JSON.parse(localStorage.getItem("userStr"));
+			});
+		});
+	</script>
+</html>

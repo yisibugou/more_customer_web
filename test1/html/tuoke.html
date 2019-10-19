@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title>首页</title>
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/properties.js"></script>
+		
+		<script type="text/javascript" src="http://developer.baidu.com/map/jsdemo/demo/convertor.js"></script>
+		<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=T26HSF0OH8eIb6H6FbA4vqKvOF4HZnTz"></script>
+		
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<link href="../css/mui.picker.css" rel="stylesheet" />
+		<link href="../css/mui.poppicker.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="../css/app.css" />
+		
+		<script src="../js/mui.picker.js"></script>
+		<script src="../js/mui.poppicker.js"></script>
+		<script src="../js/city.data.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../js/city.data-3.js" type="text/javascript" charset="utf-8"></script>
+		<style>
+			html,
+			body {
+				background-color: #efeff4;
+				width:100%;
+				height: 100%;
+			}
+			[v-cloak]{
+				display: none;
+			}
+			.title {
+				margin: 20px 15px 10px;
+				color: #6d6d72;
+				font-size: 15px;
+				padding-bottom: 51px;
+			}
+			
+			.gradual-change-region {
+				background: -webkit-linear-gradient(#B27CEB, #8074E3); /* Safari 5.1 - 6.0 */
+				background: -o-linear-gradient(#B27CEB, #8074E3); /* Opera 11.1 - 12.0 */
+				background: -moz-linear-gradient(#B27CEB, #8074E3); /* Firefox 3.6 - 15 */
+				background: linear-gradient(#B27CEB, #8074E3); /* 标准的语法（必须放在最后） */
+			}
+			.gradual-change-industry {
+				background: -webkit-linear-gradient(#6CBBCF, #6195E9); /* Safari 5.1 - 6.0 */
+				background: -o-linear-gradient(#6CBBCF, #6195E9); /* Opera 11.1 - 12.0 */
+				background: -moz-linear-gradient(#6CBBCF, #6195E9); /* Firefox 3.6 - 15 */
+				background: linear-gradient(#6CBBCF, #6195E9); /* 标准的语法（必须放在最后） */
+			}
+			.gradual-change-search {
+				background: -webkit-linear-gradient(#FBB277, #FEA481); /* Safari 5.1 - 6.0 */
+				background: -o-linear-gradient(#FBB277, #FEA481); /* Opera 11.1 - 12.0 */
+				background: -moz-linear-gradient(#FBB277, #FEA481); /* Firefox 3.6 - 15 */
+				background: linear-gradient(#FBB277, #FEA481); /* 标准的语法（必须放在最后） */
+			}
+			.gradual-change-export {
+				background: -webkit-linear-gradient(#FC856B, #F14D77); /* Safari 5.1 - 6.0 */
+				background: -o-linear-gradient(#FC856B, #F14D77); /* Opera 11.1 - 12.0 */
+				background: -moz-linear-gradient(#FC856B, #F14D77); /* Firefox 3.6 - 15 */
+				background: linear-gradient(#FC856B, #F14D77); /* 标准的语法（必须放在最后） */
+			}
+			.mui-popover .mui-popover-arrow.mui-bottom{
+				display:none;
+			}
+			[v-cloak] {
+				display: none !important;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="app" class="mui-content" style="width:100%; display:flex; flex-direction: column; align-items: center; height:100%; " v-cloak>
+			<div style="height: 30%; -moz-box-shadow:0px 0px 5px #333333; -webkit-box-shadow:0px 0px 5px #333333; box-shadow:0px 0px 5px #333333; background: white; width: 95%; display: flex; flex-direction: column; border-radius: 8px; align-items: center; margin-top: 10px;">
+				<div style="display: flex; width: 100%; color: white; align-items: center; justify-content: space-around; margin-top: 20px;">
+					<div id="cityPicker" class="gradual-change-region" style="width: 45%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; height: 80px; padding: 10px;">
+						<div v-if="region.length == 0" style="font-size: 18px; ">
+							选择区域
+						</div>
+						<div v-if="region.length == 0" style="font-size: 13px; margin-top: 10px;">
+							附近范围 指定地区
+						</div>
+						<div v-if="region.length > 0">
+							{{ (region[0].value =='90001' ? '' : (region[0].text + region[1].text)) + region[2].text }}
+						</div>
+					</div>
+					
+					<div id="chooseIndustry" class="gradual-change-industry" style="width: 45%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px;  height: 80px; padding: 10px;">
+						<div v-if="industry.id == null" style="font-size: 18px;">
+							选择行业
+						</div>
+						<div v-if="industry.id == null" style="font-size: 13px; margin-top: 10px;">
+							热门行业 自定义搜索
+						</div>
+						<div v-if="industry.id != null">
+							{{ industry.name }}
+						</div>
+					</div>
+				</div>
+				<div style="display: flex; width: 100%; color: white; align-items: center; justify-content: space-around; margin: 15px 0;">
+					<div  v-on:click="search()" class="gradual-change-search" style="width: 22%; display: flex; flex-direction: column; align-items: center; border-radius: 10px;">
+						<div style="font-size: 18px; margin: 10px 0;">
+							搜索
+						</div>
+					</div>
+					
+					<div  v-on:click="openExportWin()"  class="gradual-change-export" style="width: 22%; display: flex; flex-direction: column; align-items: center; border-radius: 10px;">
+						<div style="font-size: 18px; margin: 10px 0;">
+							导出
+						</div>
+					</div>
+					
+					<div  v-on:click="addSmsTask()"  class="gradual-change-export" style="width: 22%; display: flex; flex-direction: column; align-items: center; border-radius: 10px;">
+						<div style="font-size: 18px; margin: 10px 0;">
+							短信
+						</div>
+					</div>
+					<div  v-on:click="showInMap()"  class="gradual-change-export" style="width: 22%; display: flex; flex-direction: column; align-items: center; border-radius: 10px;">
+						<div style="font-size: 18px; margin: 10px 0;">
+							地图
+						</div>
+					</div>
+					
+				</div>
+			</div>
+			<div  style="width:95%; display: flex; flex-direction: column; background: white; border-radius: 8px; margin-top: 30px; height: 60%; overflow: hidden;">
+				<div style="width: 100%; display: flex; padding:10px 0; color: #F0AD4E; font-weight: 800;">
+					<div style="width:15%; text-align: center;">
+						编号
+					</div>
+					<div style="width:25%; text-align: center;">
+						名称
+					</div>
+					<div style="width:35%; text-align: center;">
+						手机号码
+					</div>
+					<div style="width:25%; text-align: center;">
+						地址
+					</div>
+				</div>
+				<div style="width: 100%; height: 90%;  overflow: scroll;">
+					<div v-for="(contact, index) in contactList" v-on:click="clickContact(index)" style="font-weight: 600; color: black; padding:5px 0; width: 100%; display: flex; align-items: flex-end; border-bottom: 1px solid #F2F2F2; font-size: 13px;">
+						<div style="width:15%; text-align: center;">
+							{{ index + 1 }}
+						</div>
+						<div style="width:25%; text-align: center; text-overflow: ellipsis;  overflow: hidden;  white-space: nowrap;  -o-text-overflow：ellipsis;
+	">
+							{{ contact.name }}
+						</div>
+						<div style="width:35%; text-align: center;  text-overflow: ellipsis; overflow: hidden;  white-space: nowrap; -o-text-overflow：ellipsis;
+	">
+							{{ contact.phone }}
+						</div>
+						<div style="width:25%; text-align: center;  text-overflow: ellipsis;  overflow: hidden; white-space: nowrap; -o-text-overflow：ellipsis;
+	 ">
+							{{ contact.city + contact.district + contact.detail }}
+						</div>
+					</div>
+				</div>
+			</div>
+		
+			<div id="popover" class="mui-popover" v-if="contactList.length > 0" style="position:fixed; top: 200px; left: 0; right: 0; margin-left: auto; margin-right: auto;">
+			  <ul class="mui-table-view">
+				<li class="mui-table-view-cell">{{ contactClickIndex + 1 }}</li>
+				<li class="mui-table-view-cell">{{ contactList[contactClickIndex].name }}</li>
+				<li class="mui-table-view-cell">{{ contactList[contactClickIndex].phone }}</li>
+				<li class="mui-table-view-cell">
+				{{ contactList[contactClickIndex].city + contactList[contactClickIndex].district + contactList[contactClickIndex].detail}}
+				</li>
+			  </ul>
+			</div>
+		
+			<div id="popover1" class="mui-popover" style="padding: 15px 15px; font-size: 18px; position:fixed; top: 200px; left: 0; right: 0; margin-left: auto; margin-right: auto;">
+				<div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+					<div style="width: 100%;">
+						<div class="mui-input-row mui-radio mui-left">
+							<label>导出到通讯录</label>
+							<input name="radio1" type="radio" checked="checked">
+						</div> 
+						<div class="mui-input-row mui-radio mui-left">
+							<label>导出Excel表</label>
+							<input name="radio1" type="radio">
+						</div> 
+					</div> 
+					<input type="text" style="margin-top: 10px; border-radius: 6px;" placeholder="通讯录前缀" v-model="prefix" />
+					<div v-on:click="exportContact()" style="background: #F0AD4E; padding: 10px 20px; color: white; text-align: center; border-radius: 7px;">
+						确定
+					</div>
+				</div>
+			</div>
+			
+	
+			<div v-if="exporting" style="z-index: 1000; position: fixed; top: 200px; background: white; width: 300px; display: flex; flex-direction: column; align-items: center; padding: 30px 0; border-radius: 7px; left: 0; right: 0; margin-left: auto; margin-right: auto;">
+				<div>
+					正在导入通讯录({{ currentExportNum }}/{{ totalExportNum }})
+				</div>
+				<div style="background: #C0C0C0; width: 200px; height: 10px; border-radius: 4px; overflow: hidden; margin-top: 10px;">
+					<div style="height: 100%; background: #F0AD4E;" v-bind:style="{ width: exportPercent }"></div>
+				</div>
+			</div>
+			<div v-if="exporting" style="z-index: 999; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.3)">
+				
+			</div>
+		</div>
+	
+		
+		
+		<script src="../js/util.js"></script>
+		<script type="text/javascript">
+			(function() {
+				var app = new Vue({
+					el: '#app',
+					data: {
+						contactList: [],
+						contactClickIndex: 0,
+						prefix: "",
+						exportPercent: "0",
+						currentExportNum: 0,
+						totalExportNum: 0,
+						exporting: false,
+						region: [{"text": "山东省"}, {"text": "青岛市"}, {"text": "李沧区"}],
+						industry: {},
+						location: {}
+					},
+					methods: {
+						search: function() {						
+							if(app.region.length == 0) {
+								mui.alert("请选择区域", "提示");
+								return;
+							}
+							if(app.industry.id == null) {
+								mui.alert("请选择行业", "提示");
+								return;
+							}
+							var url = "getContactByRegion";
+							var data = {
+									"province": app.region[0].text,
+									"city": app.region[1].text,
+									"district" : app.region[2].text,
+									"secondIndustryId": app.industry.id,
+									"page": 1,
+									"size": 20
+								};
+							if(app.region[0].value == '90001') {
+								url = "getNearbyContact";
+								data = {
+									"distance": app.region[2].value,
+									"secondIndustryId": app.industry.id,
+									"longitude": app.location.longitude,
+									"latitude": app.location.latitude,
+									"page": 1,
+									"size": 20
+								};
+							}
+							plus.nativeUI.showWaiting("加载中...");
+							axios({
+								method: "POST",
+								url: server + "/contact/" + url,
+								data: data,
+								headers: {
+									"Content-Type": "application/json",
+									"token": localStorage.getItem("token")
+								}
+							}).then(function(res) {
+								plus.nativeUI.closeWaiting();
+								app.contactList = res.data.data;
+							});
+						},
+						openExportWin: function() {
+							if(app.contactList.length == 0) {
+								mui.alert("无数据可导出");
+								return;
+							}
+							mui('#popover1').popover('show');
+						},
+						
+						clickContact: function(index) {
+							app.contactClickIndex = index;
+							mui('#popover').popover('show');
+						
+						},
+						exportContact: function() {
+							mui('#popover1').popover('hide');
+							if(app.contactList.length == 0) {
+								mui.alert("无数据可导出");
+								return;
+							}
+							app.exporting = true;
+							plus.contacts.getAddressBook(
+								plus.contacts.ADDRESSBOOK_PHONE, 
+								function(addressbook) {			
+									// 向通讯录中添加联系人
+									app.totalExportNum = app.contactList.length;
+									for(var i = 0; i < app.totalExportNum; ++i) {
+										var contact = addressbook.create();
+										contact.name = {givenName: app.prefix + app.contactList[i].name};
+										contact.phoneNumbers = [{type: "手机", value: app.contactList[i].phone, preferred: true}];
+										contact.save();
+										app.currentExportNum++;
+										app.exportPercent = (app.currentExportNum * 100 / app.totalExportNum) + "%";
+									}
+									app.exporting = false;
+									app.exportPercent = "0";
+									app.currentExportNum = 0;
+									app.totalExportNum = 0;
+								}, 
+								function(e) {
+									mui.toast("获取电话簿失败 " + e.message);
+								}
+							);
+						},
+						addSmsTask: function() {
+							if(app.contactList.length == 0) {
+								mui.alert("无数据可生成短信任务");
+								return;
+							}
+							plus.nativeUI.showWaiting("生成任务中....");
+							var contactIds = new Array();
+							for(var i = 0; i < app.contactList.length; ++i) {
+								contactIds.push(app.contactList[i].id);
+							}
+							axios({
+								method: "POST",
+								url: server + "/contact/addSmsTask",
+								data: {
+									"contactIds": contactIds.join(),
+									"region": app.region[0].text + app.region[1].text + app.region[2].text,
+									"name": app.industry.name
+								},
+								headers: {
+									"Content-Type": "application/json",
+									"token": localStorage.getItem("token")
+								}
+							}).then(function(res) {
+								plus.nativeUI.closeWaiting();
+								mui.alert("生成短信任务成功！");
+							});
+						},
+						showInMap: function() {
+							if(app.contactList.length == 0) {
+								mui.alert("无数据可显示");
+								return;
+							}
+							var w = plus.webview.create('showInMap.html', 'new', {}, { "contactList": app.contactList });
+							w.show("slide-in-right");
+						}
+					}
+				});
+				mui.init();
+				mui.plusReady(function() {
+					getLocation();
+					function getLocation() {
+						plus.geolocation.getCurrentPosition(translatePoint, function(e){
+							mui.toast("获取位置异常:" + e.message);
+						});
+					}
+	               
+				 	function translatePoint(position){
+					    var currentLon = position.coords.longitude;
+					    var currentLat = position.coords.latitude;
+					    var ggPoint = new BMap.Point(currentLon, currentLat);
+						var convertor = new BMap.Convertor();
+						var pointArr = [];
+						pointArr.push(ggPoint);
+						convertor.translate(pointArr, 1, 5, translateCallback);
+					}			
+					function translateCallback(data) {
+						app.location = {
+							"longitude": data.points[0].lng,
+							"latitude": data.points[0].lat
+						};
+						var geoc = new BMap.Geocoder();    
+						geoc.getLocation(data.points[0], function(rs){
+							var addComp = rs.addressComponents;
+							mui.toast("当前位置：" + addComp.province + addComp.city + addComp.district + addComp.street + addComp.streetNumber);
+						});        
+					}
+					
+					
+					var cityPicker3 = new mui.PopPicker({
+						layer: 3
+					});
+					var nearby = {
+						value: '90001',
+						text: '附近',
+						children: [{
+							value: "90002",
+							text: "附近",
+							children: [{
+								value: "0.5",
+								text: "附近500米"
+							}, {
+								value: "1.5",
+								text: "附近1500米"
+							}, {
+								value: "2",
+								text: "附近2000米"
+							}, {
+								value: "3",
+								text: "附近3000米"
+							}, {
+								value: "5",
+								text: "附近5000米"
+							}]
+						}]
+					};
+					cityData3.unshift(nearby);
+					cityPicker3.setData(cityData3);
+					var showCityPickerButton = document.getElementById('cityPicker');
+					showCityPickerButton.addEventListener('tap', function(event) {
+						cityPicker3.show(function(items) {
+							
+							app.region = items;
+							if(app.region[0].value == '90001') {
+								getLocation();
+							}
+							// showCityPickerButton.innerText = items[0]['text'] + " " + items[1]['text'] + " " + items[2]['text'];
+						});
+					}, false);
+					
+					var chooseIndustryBtn = document.getElementById('chooseIndustry');
+					chooseIndustryBtn.addEventListener('tap', function(event) {
+						var w = plus.webview.create('chooseIndustry.html', 'new', {}, {name: "name"});
+						w.show("slide-in-right");
+					}, false);
+					
+					// window.addEventListener('abc', function(e) {
+					// 	chooseIndustryBtn.innerText = e.detail.choosedIndustry;
+					// });
+					window.addEventListener('test', function(e){
+						app.industry = e.detail;
+						// document.getElementById('chooseIndustry').innerText = e.detail.name;
+					});
+		var aniShow = {};
+		// util.initSubpage(aniShow);
+		var 	nview = plus.nativeObj.View.getViewById('tabBar'),
+			activePage = plus.webview.currentWebview(),
+			targetPage,
+			subpages = util.options.subpages,
+			pageW = window.innerWidth,
+			currIndex = 0;
+					// var activePage = plus.webview.currentWebview(),
+					// 	targetPage,
+					// 	subpages =  ["html/news.html", "html/smsTaskList.html", "html/mine.html", "html/tuoke.html"];
+					document.getElementById('more').addEventListener("tap", function() {
+						mui.toast("无数据可导出");
+						targetPage = plus.webview.getWebviewById(subpages[0]);
+						activePage = plus.webview.currentWebview();
+						// //底部选项卡切换
+						 // util.toggleNview(3);
+						// 子页面切换
+						util.changeSubpage(targetPage, activePage, {});
+						//更新当前活跃的页面
+						activePage = targetPage;
+					})
+					
+				})
+			
+				
+				
+				
+				
+			})();
+		</script>
+	</body>
+
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/properties.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/mui.pullToRefresh.js"></script>
+		<script src="../js/mui.pullToRefresh.material.js"></script>
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<style>
+			html,body {
+				background-color: #efeff4;
+				width: 100%;
+			}
+			.choosed {
+				
+			}
+			[v-cloak] {
+				display: none !important;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="app" v-cloak>
+			<header class="mui-bar mui-bar-nav">
+				<a  class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+				<h1 class="mui-title">短信模板</h1>
+			</header>
+			<div class="mui-content" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+			
+				
+				<div class="order_list"  style="width: 95%;">
+					<div v-for="(smsTemp, i) in smsTempList" style="margin-top: 5px; background: white; border-radius: 8px; display: flex; flex-direction: column; width: 100%; padding: 10px 15px; box-sizing: border-box; border-bottom: 1px solid #E8E8E8;">
+						<div v-on:click="chooseSmsTemp(smsTemp.id)" style="width: 100%; display: flex; justify-content: space-between;">
+							<div>
+								{{ smsTemp.name }}
+							</div>
+							<div v-if="smsTemp.defaultFlag == 1" style="color: #F20037; ">
+								默认模板
+							</div>
+						</div>
+						<div v-on:click="chooseSmsTemp(smsTemp.id)" style="font-size: 14px; padding: 4px 0;">
+							{{ smsTemp.content }}
+						</div>
+						<div style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
+							<div v-on:click="chooseSmsTemp(smsTemp.id)">
+								{{ smsTemp.sign }}
+							</div>
+							<div style="display: flex; align-items: center; width: 70px; justify-content: space-between;">
+								<div style="width: 22px;" v-on:click="editSmsTemp(i)">
+									<img src="../images/edit.png" style="width: 100%;"/>
+								</div>
+								<div style="width: 22px;" v-on:click="deleteSmsTemp(i)">
+									<img src="../images/delete.png" style="width: 100%;"/>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div v-on:click="addSmsTemp" style="z-index: 10; position: fixed; bottom: 0; padding: 12px 0; width: 100%; font-size: 20px; color: white; background: #F20037; text-align: center;">
+				新增模板
+			</div>
+		</div>
+	</body>
+
+	<script>
+		var app = new Vue({
+			el: '#app',
+			data: {
+				smsTempList: [],
+				smsTaskId: ""
+			},
+			methods: {
+				deleteSmsTemp: function(i) {
+					mui.confirm("确定要删除该短信模板吗？", "", ['否', '是'], function(e) {
+						if (e.index == 1) {
+							axios({
+								method: "POST",
+								url: server + "/contact/deleteSmsTemplate",
+								data: {
+									id: app.smsTempList[i].id
+								},
+								headers: {
+									"Content-Type": "application/json",
+									"token": localStorage.getItem("token")
+								}
+							}).then(function(res) {
+								if(res.data.success) {
+									app.getSmsTempList();
+								}
+							});
+						} 
+					})
+				},
+				editSmsTemp: function(i) {
+					var w = plus.webview.create('smsTempEdit.html', 'new', {}, { "smsTemp": app.smsTempList[i], "type": "1" });
+					w.show("slide-in-right");
+				},
+				addSmsTemp: function() {
+					var w = plus.webview.create('smsTempEdit.html', 'new', {}, { "type": "2" });
+					w.show("slide-in-right");
+				},
+				getSmsTempList: function() {
+					plus.nativeUI.showWaiting("加载中...");
+					axios({
+						method: "POST",
+						url: server + "/contact/getSmsTemplateList",
+						data: {
+							
+						},
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.getItem("token")
+						}
+					}).then(function(res) {
+						app.smsTempList = res.data.data;
+						plus.nativeUI.closeWaiting();
+					});
+				},
+				chooseSmsTemp: function(smsTemplateId) {
+					plus.nativeUI.showWaiting("加载中...");
+					axios({
+						method: "POST",
+						url: server + "/contact/updateSmsTask",
+						data: {
+							id: app.smsTaskId,
+							smsTemplateId: smsTemplateId
+						},
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.getItem("token")
+						}
+					}).then(function(res) {
+						plus.nativeUI.closeWaiting();
+						if(res.data.success) {
+							var thisWb = plus.webview.currentWebview();
+							var tnavBack = thisWb.opener();
+							//A页面执行abc事件
+							mui.fire(tnavBack, "refresh", { "smsTemplateId": smsTemplateId}); 
+							thisWb.close();
+						}
+					});
+				}
+			}
+		});
+		mui.plusReady(function() {
+			app.smsTaskId = plus.webview.currentWebview().smsTaskId;
+			app.getSmsTempList();
+			window.addEventListener('refresh', function(e){
+				app.getSmsTempList();
+			});
+		})
+		mui.init({
+			// swipeBack: true, //启用右滑关闭功能
+			// pullRefresh: {
+			// 	container: "#pullrefresh",//待刷新区域标识，querySelector能定位的css选择器均可，比如：id、.class等
+			// 	up: {
+			// 		height: 50,//可选.默认50.触发上拉加载拖动距离
+			// 		auto: true,//可选,默认false.自动上拉加载一次
+			// 		contentrefresh : "正在加载...",//可选，正在加载状态时，上拉加载控件上显示的标题内容
+			// 		contentnomore: '没有更多数据了',//可选，请求完毕若没有更多数据时显示的提醒内容；
+			// 		callback: function() {
+			// 			var newData = new Array();
+			// 			for(var i = app.smsTempList.length + 1; i < app.smsTempList.length + 10; ++i) {
+			// 				var taskTempJson = 	{
+			// 					"name": "短信模板名称" + i,
+			// 					"content": "短信内容短信内容短信内容短信内容短信内容短信内容短信内容短信内容短信内容短信内容短信内容短信内容短信内容短信内容",
+			// 					"sign": "短信签名",
+			// 					"id" : i
+			// 				}
+			// 				newData.push(taskTempJson);
+			// 			}
+			// 			app.smsTempList = app.smsTempList.concat(newData);
+			// 			mui('#pullrefresh').pullRefresh().endPullupToRefresh(app.smsTempList.length < 20);
+			// 			// self.endPullUpToRefresh(false);
+			// 		}//必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+			// 	}
+			// }
+		});
+	</script>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/properties.js"></script>
+		<script src="../js/mui.picker.js"></script>
+		<script src="../js/mui.poppicker.js"></script>
+		<script src="../js/mui.picker.min.js"></script>
+		<script src="../js/city.data.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../js/city.data-3.js" type="text/javascript" charset="utf-8"></script>
+		
+		<link href="../css/mui.min.css" rel="stylesheet">
+		<link href="../css/mui.picker.css" rel="stylesheet" />
+		<link href="../css/mui.poppicker.css" rel="stylesheet" />
+		<link href="../css/mui.picker.min.css" rel="stylesheet"/>
+		<style>
+			html,body,#app {
+				background-color: white;
+				width: 100%;
+				height: 100%;
+			}
+			[v-cloak] {
+				display: none !important;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="app" v-cloak>
+			<header class="mui-bar mui-bar-nav" >
+				<a  class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+				<h1 class="mui-title">{{ type == 1 ? '商务合作' : '成为代理商' }}</h1>
+			</header>
+			<div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; margin-top: 60px;">
+				<div style="font-size: 21px; font-weight: 700;">
+					{{ type == 1 ? '合作热线：': '代理商热线：' }} 
+					<span style="color: #F20037;">{{ type == 1 ? '0532-88888888': '0532-6666666' }}</span>
+				</div>
+				<div style="width: 95%; height: 100%; margin-top: 20px;">
+					<input type="number" placeholder="手机号" v-model="phone" style="border: 1px solid gray !important;"/>
+					<input type="text" placeholder="姓名" v-model="name" style="border: 1px solid gray !important;"/>
+					<input id="cityPicker" readonly="readonly" type="text" placeholder="所在地区" v-model="region.text" style="border: 1px solid gray !important;"/>
+					<input id="industryPicker" readonly="readonly" type="text" placeholder="所在行业" v-model="industry.text" style="border: 1px solid gray !important;"/>
+					<textarea maxlength="500" placeholder="合作意向" style="width: 100%; height: 200px; border: 1px solid gray !important;"></textarea>
+					<input v-on:click="addCooperation()" type="button" value="提 交" 
+					style="font-size: 18px; font-weight: 700; background: #F20037; width: 100%; color: white; padding: 10px 0; font-size: 18px; border-radius: 18px; margin-top: 30px; "/>
+				</div>
+			</div>
+		</div>
+	</body>
+
+	<script>
+		var app = new Vue({
+			el: '#app',
+			data: {
+				phone: "",
+				region: {
+					"text": "",
+					"province": "",
+					"city": "",
+					"district": ""
+				},
+				industryList: [],
+				industry: {
+					"text": "",
+					"val": ""
+				},
+				type: 1
+			},
+			methods: {
+				getIndustryList: function() {
+					var that = this;
+					axios({
+						method: "POST",
+						url: server + "/industry/getIndustryList",
+						data: {},
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.getItem("token")
+						}
+					}).then(function(res) {
+						app.industryList = res.data.data;
+						for(var i = 0; i < app.industryList.length; ++i) {
+							that.$set(app.industryList[i], "text", app.industryList[i].name);
+							for(var j = 0; j < app.industryList[i].secondIndustryViewList.length; ++j) {
+								that.$set(app.industryList[i].secondIndustryViewList[j], "text", app.industryList[i].secondIndustryViewList[j].name);
+							}
+							that.$set(app.industryList[i], "children", app.industryList[i].secondIndustryViewList);
+						}
+						
+						var industryPicker = new mui.PopPicker({layer: 2}); 
+						industryPicker.setData(app.industryList); 
+						var showIndustryPickerButton = document.getElementById("industryPicker");
+						showIndustryPickerButton.addEventListener('tap', function(event) {
+							industryPicker.show(function(items) {
+								app.industry = items[1];
+							});
+						}, false);
+					});
+				},
+				addCooperation: function() {
+					if(app.phone == '') {
+						mui.alert("手机号必填");
+						return;
+					}
+					if(app.name == '') {
+						mui.alert("姓名必填");
+						return;
+					}
+					if(app.region.text == '') {
+						mui.alert("地区必填");
+						return;
+					}
+					if(app.industry.text == '') {
+						mui.alert("行业必填");
+						return;
+					}
+					plus.nativeUI.showWaiting("提交中...");
+					axios({
+						method: "POST",
+						url: server + "/cooperation/addCooperation",
+						data: {
+							"phone": app.phone,
+							"province": app.region.province,
+							"city": app.region.city,
+							"district": app.region.district,
+							"secondIndustryId": app.industry.id
+						},
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.getItem("token")
+						}
+					}).then(function(res) {
+						plus.nativeUI.closeWaiting();
+						if(res.data.success) {
+							mui.toast("提交成功！");
+						}
+						var thisWb = plus.webview.currentWebview();
+						var tnavBack = thisWb.opener();
+						//A页面执行abc事件
+						mui.fire(tnavBack, "addCooperationSuccess", {}); 
+						thisWb.close();
+					});
+				}
+			}
+		});
+		mui.init({
+			keyEventBind: {
+				backbutton: true //开启back按键监听
+			}
+		});
+		
+		mui.plusReady(function() {
+			app.type = plus.webview.currentWebview().type;
+			app.getIndustryList();
+			
+			var cityPicker3 = new mui.PopPicker({
+				layer: 3
+			});
+			cityPicker3.setData(cityData3);
+			var showCityPickerButton = document.getElementById('cityPicker');
+			showCityPickerButton.addEventListener('tap', function(event) {
+				cityPicker3.show(function(items) {
+					app.region.text = items[0].text + ' ' + items[1].text + ' ' + items[2].text;
+					app.region.province = items[0].text;
+					app.region.city = items[1].text;
+					app.region.district = items[2].text;
+				});
+			}, false);
+			
+			var sexPicker = new mui.PopPicker(); 
+			sexPicker.setData([{val: 1, text: "男"}, {val: 2, text: "女"}]); 
+			var showSexPickerButton = document.getElementById('sexPicker');
+			showSexPickerButton.addEventListener('tap', function(event) {
+				sexPicker.show(function(items) {
+					app.sex = items[0];
+				});
+			}, false);
+			
+			var birthdayPicker = new mui.DtPicker({type: "date"}); 
+			var showBirthdayPickerButton = document.getElementById('birthdayPicker');
+			showBirthdayPickerButton.addEventListener('tap', function(event) {
+				birthdayPicker.show(function(items) {
+					app.birthday = items.y.text + "-" + items.m.text + "-" + items.d.text;
+				});
+			}, false);
+		});
+		
+	</script>
+</html>

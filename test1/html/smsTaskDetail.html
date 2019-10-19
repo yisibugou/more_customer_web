@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/properties.js"></script>
+		<script src="../js/mui.pullToRefresh.js"></script>
+		<script src="../js/mui.pullToRefresh.material.js"></script>
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<link rel="stylesheet" href="../fonts/font_tick/iconfont.css">
+		<style>
+			html,body {
+				background-color: #efeff4;
+			}
+			.choosed {
+				
+			}
+			[v-cloak] {
+				display: none !important;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a  class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">短信明细</h1>
+		</header>
+		<div id="app" class="mui-content" style="display: flex; flex-direction: column; align-items: center; width: 100%;" v-cloak>
+			<div style=" display: flex; width: 95%; background: white; padding: 10px; border-radius: 6px; align-items: center;">
+				<div v-if="smsTemp != null" style="display: flex; flex-direction: column; width: 95%;">
+					<div>
+						{{ smsTemp.name }}
+					</div>
+					<div style="font-size: 14px; padding: 4px 0;">
+						{{ smsTemp.content }}
+					</div>
+					<div>
+						{{ smsTemp.sign }}
+					</div>
+				</div>
+				<div v-if="smsTemp == null" style="display: flex; flex-direction: column; width: 95%;">
+					选择模板
+				</div>
+				<div v-if="smsTask.status == 0" style="width:5%" v-on:click="getSmsTempList">
+					<img src="../images/youjiantou.png" style="width: 100%;"/>
+				</div>
+			</div>
+			<div id="pullrefresh"  style="margin-top: 20px; margin-bottom: 70px; width: 95%;  padding: 0 10px; box-sizing: border-box; background: white; border-radius: 10px;">
+				<div v-for="(detail, index) in smsTaskDetailList" v-on:click="choose(index)" style="display: flex; width: 100%; padding: 10px 5px; box-sizing: border-box; align-items: center; border-bottom: 1px solid #E8E8E8;">
+					<i v-bind:style="{ color: detail.isChoosed ? '#F20037' : 'gray'}" v-if="smsTask.status == 0" class="iconfont icon-dui" 
+					style="font-size: 25px;  margin-right: 8px;" ></i>
+					<div style="width: 92%; display: flex; flex-direction: column; box-sizing: border-box; padding-left: 15px;">
+						<div style="width: 100%">
+							{{ detail.contactName }}
+						</div>
+						<div style="width: 100%; font-size: 14px;">
+							{{ detail.province + detail.city + detail.district + detail.detail }}
+						</div>
+						<div style="width: 100%">
+							{{ detail.phone }}
+						</div>
+					</div>
+				</div>
+			</div>
+			<div style="z-index: 10; position: fixed; bottom: 0; width: 100%; display: flex; background: white; border-top: 1px solid #F20037; align-items: center; justify-content: space-between;">
+				<div v-if="smsTask.status == 0" style="display: flex; align-items: center;" >
+					<div v-on:click="chooseAll()" style="display: flex;">
+						<i class="iconfont icon-dui" style="font-size: 25px; margin-left: 10px;" 
+						v-bind:style="{ color: isChooseAll ? '#F20037' : 'gray'}"></i>
+						<div style="margin:0 10px;">
+							全选
+						</div>
+					</div>
+					<div>
+						共{{ total }}条，{{ totalCost }}积分
+					</div>
+				</div>
+				<div v-if="smsTask.status == 0" v-on:click="sendSms()" style="background: #F20037; color: white; font-size: 18px; padding: 15px 20px;">
+					发送
+				</div>
+				<div v-if="smsTask.status == 1" style="width: 100%; padding: 10px 0; text-align: center;">
+					已发送{{ total }}条，共花费了{{ totalCost }}积分
+				</div>
+			</div>
+		</div>
+	</body>
+
+	<script>
+		
+		
+		var app = new Vue({
+			el: '#app',
+			data: {
+				isChooseAll: true,
+				total: 0,
+				totalCost: 0, 
+				smsTemp: {},
+				smsTaskDetailList: [],
+				smsTask: {},
+				price: 10
+			},
+			methods: {
+				choose: function(i) {
+					if(app.smsTask.status !== 0) return;
+					app.smsTaskDetailList[i].isChoosed = !app.smsTaskDetailList[i].isChoosed;
+					if(app.smsTaskDetailList[i].isChoosed) {
+						app.total++;
+					} else {
+						app.total--;
+					}
+					app.totalCost = app.total * app.price;
+				},
+				getSmsTempList: function() {
+					var w = plus.webview.create('smsTempList.html', 'new', {}, { "smsTaskId": app.smsTask.id });
+					w.show("slide-in-right");
+				},
+				chooseAll: function() {
+					app.isChooseAll = !app.isChooseAll;
+					for(var i = 0; i < app.smsTaskDetailList.length; ++i) {
+						app.smsTaskDetailList[i].isChoosed = app.isChooseAll;
+					}
+					app.total = app.isChooseAll ? app.smsTaskDetailList.length : 0;
+					app.totalCost = app.total * app.price;
+				},
+				getSmsTaskDetail() {
+					var that = this;
+					axios({
+						method: "POST",
+						url: server + "/contact/getSmsTaskDetail",
+						data: app.smsTask,
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.getItem("token")
+						}
+					}).then(function(res) {
+						app.smsTaskDetailList = res.data.data.smsTaskDetailList;	
+						for(var i = 0; i < app.smsTaskDetailList.length; ++i) {
+							that.$set(app.smsTaskDetailList[i], "isChoosed", app.isChooseAll); 
+						}
+						app.smsTemp =  res.data.data.smsTemplate;	
+						app.total = app.smsTaskDetailList.length;
+						app.totalCost = app.total * app.price;
+					});
+				},
+				sendSms: function() {
+					plus.nativeUI.showWaiting("发送中...");
+					var contactIds = new Array();
+					for(var i = 0; i < app.smsTaskDetailList.length; ++i) {
+						if(app.smsTaskDetailList[i].isChoosed) {
+							contactIds.push(app.smsTaskDetailList[i].contactId);
+						}
+					}
+					axios({
+						method: "POST",
+						url: server + "/contact/sendSms",
+						data: { "id": app.smsTask.id, "contactIds": contactIds.join() },
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.getItem("token")
+						}
+					}).then(function(res) {
+						plus.nativeUI.closeWaiting();
+						if(res.data.success) {
+							var user = JSON.parse(localStorage.getItem("userStr"));
+							user.credit = user.credit - app.totalCost;
+							localStorage.setItem("userStr", JSON.stringify(user));
+							
+							mui.alert("发送成功", "", function() {
+								var thisWb = plus.webview.currentWebview();
+								var tnavBack = thisWb.opener();
+								//A页面执行abc事件
+								mui.fire(tnavBack, "refresh", {}); 
+								thisWb.close();
+							});
+						} else {
+							mui.alert(res.data.msg);
+						}
+					});
+				}
+			}
+		});
+		
+		mui.init({
+			// swipeBack: true, //启用右滑关闭功能
+			// pullRefresh: {
+			// 	container: "#pullrefresh",//待刷新区域标识，querySelector能定位的css选择器均可，比如：id、.class等
+			// 	up: {
+			// 		height: 50,//可选.默认50.触发上拉加载拖动距离
+			// 		auto: false,//可选,默认false.自动上拉加载一次
+			// 		contentrefresh : "正在加载...",//可选，正在加载状态时，上拉加载控件上显示的标题内容
+			// 		contentnomore: '没有更多数据了',//可选，请求完毕若没有更多数据时显示的提醒内容；
+			// 		callback: function() {
+			// 			var newData = new Array();
+			// 			for(var i = app.smsTaskDetailList.length + 1; i < app.smsTaskDetailList.length + 10; ++i) {
+			// 				var taskJson = 	{
+			// 					"name": "中瑞汽车服务有限公司" + i,
+			// 					"addr": "山东省青岛市李沧区亚马逊AWS联合创新中心23层",
+			// 					"phone": "13121061770",
+			// 					"isChoosed" : false
+			// 				}
+			// 				newData.push(taskJson);
+			// 			}
+			// 			app.smsTaskDetailList = app.smsTaskDetailList.concat(newData);
+			// 			mui('#pullrefresh').pullRefresh().endPullupToRefresh(false);
+			// 			// self.endPullUpToRefresh(false);
+			// 		}//必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+			// 	}
+			// }
+		});
+		mui.plusReady(function() {
+			app.smsTask = plus.webview.currentWebview().smsTask;
+			app.getSmsTaskDetail();
+			
+			// 模板选择刷新
+			window.addEventListener('refresh', function(e){
+				app.smsTask.smsTemplateId = e.detail.smsTemplateId;
+			 	app.getSmsTaskDetail();
+			});
+		})
+	</script>
+</html>

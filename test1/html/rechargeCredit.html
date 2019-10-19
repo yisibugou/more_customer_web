@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/properties.js"></script>
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<link rel="stylesheet" href="../fonts/font_tick/iconfont.css">
+		<style>
+			html,body {
+				background-color: #efeff4;
+			}
+			.gradual-change {
+				background: -webkit-linear-gradient(#F20037, #B40020); /* Safari 5.1 - 6.0 */
+				background: -o-linear-gradient(#F20037, #B40020); /* Opera 11.1 - 12.0 */
+				background: -moz-linear-gradient(#F20037, #B40020); /* Firefox 3.6 - 15 */
+				background: linear-gradient(#F20037, #B40020); /* 标准的语法（必须放在最后） */
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav gradual-change" style="height: 80px;">
+			<a  class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left" style="color: white; margin-top: 17px;"></a>
+			<h1 class="mui-title" style="color: white; margin-top: 17px; font-size: 20px;">积分充值</h1>
+		</header>
+		<div id="app" class="mui-content" style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 50px;">
+			<div style="display: flex; flex-direction: column; width: 100%;">
+				<div style="margin-left: 15px;">
+					充值额度
+				</div>
+				<div style="display: flex; justify-content: space-around; margin-top: 10px;">
+					<div v-for="(price, index) in priceList" 
+					style="padding: 15px 30px; border: 1px solid #C7C7CC; display: flex; flex-direction: column; align-items: center;"
+					v-on:click="choosePrice(index)" 
+					v-bind:style="{ border: price.choosed ? '2px solid red' : '2px solid gray'}">
+						<div style="color: red; font-weight: 600;">
+							{{ price.credit }}积分
+						</div>
+						<div>
+							￥{{ price.price }}
+						</div>
+					</div>
+				</div>
+			</div>
+			<div style="display: flex; flex-direction: column; width: 100%; margin-top: 20px;">
+				<div style="margin-left: 15px;">
+					支付方式
+				</div>
+				<div style="display: flex; justify-content: space-around; margin-top: 10px;">
+					<div v-for="(payWay, index) in payWayList" 
+					 style=" display: flex; flex-direction: column; align-items: center;"
+					 v-on:click="choosePayWay(index)">
+						<div style="width: 60px; height: 60px;">
+							<img v-bind:src="payWay.img"  style="width: 100%; height: 100%;"/>
+						</div>
+						<i class="iconfont icon-dui" style="font-size: 25px; margin-top: 10px;" 
+						v-bind:style="{ color: payWay.choosed ? payWay.color : 'gray'}"></i>
+					</div>
+				</div>
+			</div>
+			<div v-on:click="rechargeCredit()" style="border-radius: 15px; padding: 6px 75px; background: #F9013B; color: white; margin-top: 15px;">
+				支付并充值
+			</div>
+			<div style="position: absolute; bottom: 20px; width: 100%; text-align: center; color: #8F8F94; text-decoration: underline;">
+				用户协议
+			</div>
+		</div>
+	</body>
+
+	<script>
+		var app = new Vue({
+			el: '#app',
+			data: {
+				priceList: [
+					{	
+						"credit": 1000,
+						"price": 500,
+						"choosed": true
+					},
+					{
+						"credit": 2000,
+						"price": 888,
+						"choosed": false
+					}
+				],
+				payWayList: [
+					{
+						"name": "微信支付",
+						"img": "../images/wechatPay.png", 
+						"choosed": true,
+						"color": "#01BB0C"
+					},
+					{
+						"name": "支付宝",
+						"img": "../images/aliPay.png", 
+						"choosed": false,
+						"color": "#009FE9"
+					}
+				],
+				index: 0
+			},
+			methods: {
+				choosePrice: function(index) {
+					app.index = index;
+					for(var i = 0; i < app.priceList.length; ++i) {
+						if(app.priceList[i].choosed) {
+							app.priceList[i].choosed = false;
+							break;
+						}
+					}
+					app.priceList[index].choosed = true;
+				},
+				choosePayWay: function(index) {
+					for(var i = 0; i < app.payWayList.length; ++i) {
+						if(app.payWayList[i].choosed) {
+							app.payWayList[i].choosed = false;
+							break;
+						}
+					}
+					app.payWayList[index].choosed = true;
+				},
+				rechargeCredit: function() {
+					plus.nativeUI.showWaiting("充值中...");
+					axios({
+						method: "POST",
+						url: server + "/user/rechargeCredit",
+						data: app.priceList[app.index],
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.getItem("token")
+						}
+					}).then(function(res) {
+						plus.nativeUI.closeWaiting();
+						if(res.data.success) {
+							mui.toast("充值成功");
+							var user = JSON.parse(localStorage.getItem("userStr"));
+							user.credit += app.priceList[app.index].credit;
+							localStorage.setItem("userStr", JSON.stringify(user));
+						} else {
+							mui.toast("充值失败");
+						}
+						var thisWb = plus.webview.currentWebview();
+						var tnavBack = thisWb.opener();
+						//A页面执行abc事件
+						mui.fire(tnavBack, "rechargeCreditDone", {}); 
+						thisWb.close();
+					});
+				}
+			}
+		});
+		
+		mui.init({
+			swipeBack: true,
+		});
+		mui.plusReady(function  () {
+			
+		})
+	</script>
+</html>

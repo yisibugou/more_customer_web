@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/mui.pullToRefresh.js"></script>
+		<script src="../js/mui.pullToRefresh.material.js"></script>
+		<script src="../js/properties.js"></script>
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<link rel="stylesheet" href="../fonts/font_tick/iconfont.css">
+		<style>
+			html,body {
+				background-color: #efeff4;
+				width: 100%;
+			}
+			.choosed {
+				
+			}
+			
+		</style>
+	</head>
+
+	<body>
+		<div id="app">
+			<header class="mui-bar mui-bar-nav">
+				<a  class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+				<h1 class="mui-title">问题反馈</h1>
+			</header>
+			<div class="mui-content" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+				<div style="position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: 20px;">
+					<textarea maxlength="150" type="text" style="width: 95%; height: 200px; border-radius: 6px;" placeholder="问题描述" v-model="suggestion.content"></textarea>
+					<div style="position: absolute; bottom: 20px; right: 6%; color: gray;">{{ suggestion.content.length }}/150</div>
+				</div>
+				<input v-on:click="addSuggestion()" type="button" value="提交" style="padding: 5px 50px; background: #F20037; color: white; font-size: 20px;">
+			</div>
+			
+		</div>
+		
+		
+	</body>
+
+	<script>
+		var app = new Vue({
+			el: '#app',
+			data: {
+				suggestion: {
+					"content": ""
+				}
+				
+			},
+			methods: {
+				addSuggestion: function() {
+					plus.nativeUI.showWaiting("提交中...");
+					axios({
+						method: "POST",
+						url: server + "/cooperation/addSuggestion",
+						data: app.suggestion,
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.getItem("token")
+						}
+					}).then(function(res) {
+						plus.nativeUI.closeWaiting();
+						if(res.data.success) {
+							mui.toast("反馈成功！");
+							var thisWb = plus.webview.currentWebview();
+							var tnavBack = thisWb.opener();
+							//A页面执行abc事件
+							mui.fire(tnavBack, "addSuggestionSuccess", {}); 
+							thisWb.close();
+						}
+					});
+				}
+			}
+		});
+		mui.init({
+			swipeBack: true
+		});
+		mui.plusReady(function() {
+			
+		});
+	</script>
+</html>

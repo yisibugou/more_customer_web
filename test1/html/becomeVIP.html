@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/mui.pullToRefresh.js"></script>
+		<script src="../js/mui.pullToRefresh.material.js"></script>
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<style>
+			html,body {
+				background-color: #efeff4;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a  class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">成为会员</h1>
+		</header>
+		<div id="app" class="mui-content" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+			<div style="width: 100%; display: flex; flex-direction: column; box-sizing: border-box; background: #F0AD4E; align-items: center;">
+				<div style="margin: 20px 0; color: #F2F2F2;">
+					当前身份
+				</div>
+				<div style="font-size: 23px; color: white; margin-bottom: 20px;">
+					普通用户
+				</div>
+			</div>
+			<div style="display: flex; flex-direction: column; width: 100%; background: white; align-items: center;">
+				<div style="display: flex; width: 100%; align-items: center; justify-content: space-around; margin: 30px 0;">
+					<div v-for="(price, index) in priceList"
+						style="display: flex; flex-direction: column; border: 1px solid #DDDDDD; border-radius: 7px; width: 25%; align-items: center; padding: 10px 0;"
+						v-on:click="choosePrice(index)" 
+						v-bind:style="{ border: price.choosed ? '1px solid #F0AD4E' : '1px solid #DDDDDD'}">
+						<div>
+							{{ price.name }}
+						</div>
+						<div style="color: orangered; font-size: 20px; margin: 15px 0;">
+							{{ price.price }}
+						</div>
+						<div style="width: 25px; height: 25px;" v-bind:style="{display: price.choosed ? '' : 'none'}">
+							<img src="../images/choosed.png" style="width: 100%" />
+						</div>
+						<div style="font-size: 15px; color: #ACACB4; height: 25px;" v-bind:style="{display: price.choosed ? 'none' : ''}">
+							{{ price.promotion }}
+						</div>
+					</div>
+					
+				</div>
+				
+				<div style="display: flex; width: 100%; justify-content: space-around;">
+					<div v-for="(payWay, index) in payWayList" 
+						style="border-radius: 7px; border: 1px solid #DDDDDD; display: flex; padding: 10px; align-items: center;" 
+						v-on:click="choosePayWay(index)"
+						v-bind:style="{ border: payWay.choosed ? '1px solid #F0AD4E' : '1px solid #DDDDDD' }">
+						<div style="width: 30px; height: 30px">
+							<img v-bind:src="payWay.img" style="width: 100%" />
+						</div>
+						<div style="font-size: 18px; margin-left: 7px;">
+							{{ payWay.name }}
+						</div>
+					</div>
+				</div>
+				
+				<div style="display: flex; flex-direction: column; width: 100%; align-items: center; margin-bottom: 30px;">
+					<div style="background: #F0AD4E; width: 70%; color: white; font-size: 18px; padding: 10px 0; text-align: center; margin-top: 35px; border-radius: 7px;">
+						购买VIP会员
+					</div>
+					<div style="font-size: 14px; margin-top: 8px;">
+						购买即代表同意<span style="color:  #F0AD4E">《虚拟产品不支持退款协议》</span>
+					</div>
+				</div>
+				
+			</div>
+			
+			<div style="background: white; width: 100%; display: flex; flex-direction: column; padding: 0 10px; margin-top: 30px;">
+				<div style="padding: 13px 0; display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: center;  justify-content: space-between;">
+					<div style="margin-left: 5px;">
+						《用户隐私保护协议》
+					</div>
+					<div style="width: 15px; height: 15px;">
+						<img src="../images/youjiantou.png" style="width: 100%; height: 100%;"/>
+					</div>
+				</div>
+				<div style="padding: 13px 0; display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: center;  justify-content: space-between;">
+					<div style="margin-left: 5px;">
+						《会员服务协议》
+					</div>
+					<div style="width: 15px; height: 15px;">
+						<img src="../images/youjiantou.png" style="width: 100%; height: 100%;"/>
+					</div>
+				</div>
+				<div style="padding: 13px 0; display: flex; width: 100%; border-bottom: 1px solid #F3F3F3; align-items: center;  justify-content: space-between;">
+					<div style="margin-left: 5px;">
+						《会员功能简介》
+					</div>
+					<div style="width: 15px; height: 15px;">
+						<img src="../images/youjiantou.png" style="width: 100%; height: 100%;"/>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+
+	<script>
+		var app = new Vue({
+			el: '#app',
+			data: {
+				server: "http://localhost:8080",
+				priceList: [
+					{
+						"name": "1年",
+						"price": "￥XXX",
+						"promotion": "", 
+						"choosed": true
+					},
+					{
+						"name": "2年",
+						"price": "￥XXX",
+						"promotion": "享9折优惠", 
+						"choosed": false
+					},
+					{
+						"name": "3年",
+						"price": "￥XXX",
+						"promotion": "享8折优惠", 
+						"choosed": false
+					}
+				],
+				payWayList: [
+					{
+						"name": "微信支付",
+						"img": "../images/wechatPay.png", 
+						"choosed": true
+					},
+					{
+						"name": "支付宝",
+						"img": "../images/aliPay.png", 
+						"choosed": false
+					}
+				]
+			},
+			methods: {
+				choosePrice: function(index) {
+					for(var i = 0; i < app.priceList.length; ++i) {
+						if(app.priceList[i].choosed) {
+							app.priceList[i].choosed = false;
+							break;
+						}
+					}
+					app.priceList[index].choosed = true;
+				},
+				choosePayWay: function(index) {
+					for(var i = 0; i < app.payWayList.length; ++i) {
+						if(app.payWayList[i].choosed) {
+							app.payWayList[i].choosed = false;
+							break;
+						}
+					}
+					app.payWayList[index].choosed = true;
+				}
+			}
+		});
+		
+		mui.init({
+			swipeBack: true,
+		});
+		mui.plusReady(function  () {
+			mui.toast(plus.webview.currentWebview().name);
+		})
+	</script>
+</html>

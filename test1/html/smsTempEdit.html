@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/mui.pullToRefresh.js"></script>
+		<script src="../js/mui.pullToRefresh.material.js"></script>
+		<script src="../js/properties.js"></script>
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<link rel="stylesheet" href="../fonts/font_tick/iconfont.css">
+		<style>
+			html,body {
+				background-color: #efeff4;
+				width: 100%;
+			}
+			.choosed {
+				
+			}
+			
+		</style>
+	</head>
+
+	<body>
+		<div id="app">
+			<header class="mui-bar mui-bar-nav">
+				<a  class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+				<h1 class="mui-title">{{ title }}</h1>
+			</header>
+			<div class="mui-content" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+				<input type="text" style="width: 95%; margin-top: 10px; border-radius: 6px;" placeholder="短信模板名称" v-model="smsTemp.name"/>
+				<textarea type="text" style="width: 95%; height: 250px; border-radius: 6px;" placeholder="短信内容" v-model="smsTemp.content"></textarea>
+				<input type="text" style="width: 95%;  border-radius: 6px;" placeholder="短信签名" v-model="smsTemp.sign"/>
+				<div style="display: flex; width: 95%; align-items: center; margin-bottom: 50px;" v-on:click="changeDefault()">
+					<i class="iconfont icon-dui" style="font-size: 25px;  margin-right: 8px;" 
+					v-bind:style="{ color: smsTemp.defaultFlag == 1 ? '#F20037' : 'gray'}"></i>
+					<div>
+						默认模板
+					</div>
+				</div>
+			</div>
+			
+			<div v-on:click="addOrEditSmsTemp()" style="z-index: 10; position: fixed; bottom: 0; padding: 12px 0; width: 100%; font-size: 20px; color: white; background: #F20037; text-align: center;">
+				确 定
+			</div>
+		</div>
+		
+		
+	</body>
+
+	<script>
+		var app = new Vue({
+			el: '#app',
+			data: {
+				title: "",
+				smsTemp: {
+					"name": "",
+					"content": "",
+					"sign": "",
+					"defaultFlag": 0
+				},
+				type: 0
+				
+			},
+			methods: {
+				addOrEditSmsTemp: function() {
+					var url = app.type == '1' ? "editSmsTemplate" : "addSmsTemplate"
+					plus.nativeUI.showWaiting("加载中...");
+					axios({
+						method: "POST",
+						url: server + "/contact/" + url,
+						data: app.smsTemp,
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.getItem("token")
+						}
+					}).then(function(res) {
+						plus.nativeUI.closeWaiting();
+						
+						var thisWb = plus.webview.currentWebview();
+						var tnavBack = thisWb.opener();
+						//A页面执行abc事件
+						mui.fire(tnavBack, "refresh", {}); 
+						thisWb.close();
+					});
+				},
+				changeDefault: function() {
+					app.smsTemp.defaultFlag = 1 - app.smsTemp.defaultFlag;
+				}
+			}
+		});
+		mui.init({
+			swipeBack: true
+		});
+		mui.plusReady(function() {
+			app.type = plus.webview.currentWebview().type;
+			if(app.type == "1") {
+				app.smsTemp = plus.webview.currentWebview().smsTemp;
+				app.title = "编辑短信模板";
+			} else {
+				app.title = "新增短信模板";
+			}
+			
+		});
+	</script>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title>new webview</title>
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/properties.js"></script>
+		<link href="../css/mui.min.css" rel="stylesheet" />
+	</head>
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a  class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">选择行业</h1>
+		</header>
+		<div class="mui-content" id="app" style="display:flex; flex-direction: column; width:100%; align-items: center;">
+			<div style="display: flex; width: 100%;">
+				<div style="display:flex; flex-direction: column; width: 45%; align-items: center;">
+					<div v-for="(industry, index)  in industryList" style="width:100%; padding:10px 0; background: #E8E8E8; text-align: center; border-bottom: 1px solid white;"
+					 v-on:click="changeIndustry(index)" v-bind:style="{ background: nowIndustry.index == index ? 'white' : '#E8E8E8'}">
+						{{ industry.name }}
+					</div>
+				</div>
+				<div style="display:flex; flex-direction: column; width: 55%; align-items: center;">
+					<div v-for="(secondIndustry, secondIndex) in nowIndustry.secondIndustryViewList"
+					 style="width:100%; padding:10px 0; background: white; text-align: center; border-bottom: 1px solid #E8E8E8; " 
+					 v-on:click="choooseIndustry(secondIndex)">
+						{{ secondIndustry.name }}
+					</div>
+				</div>
+			</div>
+			
+			<div style="border-radius: 8px; width:100%; display:flex; flex-direction: column; padding: 10px;  margin-top: 15px; box-sizing: border-box;">
+				<div style="font-size: 20px; border-bottom: 1px solid #AAAAAA; padding-bottom: 5px;">
+					热门行业
+				</div>
+				<div style="display:flex; flex-wrap: wrap; margin-top: 15px;">
+					<div v-for="hi in hotIndustry" 
+						style="padding: 5px 10px; background: #DDDDDD; margin:5px 6px; border-radius: 6px;"
+						v-on:click="choooseHotIndustry(hi)">
+						{{ hi.name }}
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<script>
+			mui.init();
+			
+			mui.plusReady(function() {
+				// //获取当前webview
+				// var self = plus.webview.currentWebview();
+				// //监听关闭
+				// self.addEventListener("close", function(e) {
+				//   //指定A页面ID
+				//   var tnavBack = plus.webview.getWebviewById("html/tuoke.html");
+				//   //A页面执行abc事件
+				//   
+				//   mui.fire(tnavBack,'abc', {"choosedIndustry": app.nowIndustry.name });
+				// 				
+				// }, false);
+            })
+			var app = new Vue({
+				el: '#app',
+				data: {
+					nowIndustry: {},
+					industryList: [],
+					hotIndustry: []
+				},
+				methods: {
+					changeIndustry: function(index) {
+						app.nowIndustry = app.industryList[index];
+						app.nowIndustry.index = index;
+					},
+					choooseIndustry: function(secondIndex) {
+						var thisWb = plus.webview.currentWebview();
+						var tnavBack = thisWb.opener();
+						//A页面执行abc事件
+						var name = app.nowIndustry.secondIndustryViewList[secondIndex].name;
+						var id =  app.nowIndustry.secondIndustryViewList[secondIndex].id;
+						mui.fire(tnavBack, "test", {"name": name, "id": id}); 
+						thisWb.close();
+					},
+					choooseHotIndustry: function(hotIndustry) {
+						var thisWb = plus.webview.currentWebview();
+						var tnavBack = thisWb.opener();
+						//A页面执行abc事件
+						var name = hotIndustry.name;
+						var id = hotIndustry.id;
+						mui.fire(tnavBack, "test", {"name": name, "id": id}); 
+						thisWb.close();
+					}
+				},
+				mounted: function() {
+					axios({
+						method: "POST",
+						url: server + "/industry/getIndustryList",
+						data: {},
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.getItem("token")
+						}
+					}).then(function(res) {
+						app.industryList = res.data.data;
+						app.nowIndustry = app.industryList[0];
+						app.nowIndustry.index = 0;
+					});
+					axios({
+						method: "POST",
+						url: server + "/industry/getHotIndustry",
+						data: {},
+						headers: {
+							"Content-Type": "application/json",
+							"token": localStorage.getItem("token")
+						}
+					}).then(function(res) {
+						app.hotIndustry = res.data.data;
+					});
+				}
+			});
+		</script>
+	</body>
+</html>

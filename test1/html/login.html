@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/properties.js"></script>
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<style>
+			html,body {
+				background-color: white;
+				width: 100%;
+				height: 100%;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="app" style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center;">
+			<div style="width: 100%; height: 30%; background: #F20037;">
+				
+			</div>
+			<div style="width: 90%; margin-top: 30px;">
+				<input type="text" placeholder="手机号" style="border: none; border-bottom: 1px solid #F20037;" v-model="user.phone"/>
+				<input type="password" placeholder="密码" style="border: none; border-bottom: 1px solid #F20037;"  v-model="user.password"/>
+			</div>
+			
+			<div style="width: 90%; margin-top: 40px;">
+				<input v-on:click="login()" type="button" value="登 录" 
+				style="width: 100%; background: #F20037; color: white; padding: 10px 0; font-size: 18px; border-radius: 18px;" />
+
+				<input v-on:click="register()" type="button" value="注 册" 
+				style="width: 100%; color: #F20037; padding: 10px 0; font-size: 18px; border-radius: 18px; border: 1px solid #F20037; margin-top: 15px;"/>
+			</div>
+		</div>
+	</body>
+
+	<script>
+		var app = new Vue({
+			el: '#app',
+			data: {
+				user: {
+					"phone": "",
+					"password": ""
+				}
+			},
+			methods: {
+				login: function() {
+					if(app.user.phone == '') {
+						mui.toast("请输入手机号");
+						return;
+					}
+					if(app.user.password == '') {
+						mui.toast("请输入密码");
+						return;
+					}
+					axios({
+						method: "POST",
+						url: server + "/user/login",
+						data: app.user,
+						headers: {
+							"Content-Type": "application/json",
+							"token": "f8c40fa9-c755-4952-b7ed-b7ca740c59c4"
+						}
+					}).then(function(res) {
+						mui.toast(res.data.msg);
+						if(res.data.success) {
+							localStorage.setItem("token", res.data.token);
+							localStorage.setItem("userStr", JSON.stringify(res.data.user));
+							
+							var thisWb = plus.webview.currentWebview();
+							var tnavBack = thisWb.opener();
+							//A页面执行refresh事件
+							mui.fire(tnavBack, "loginSuccess", {}); 
+							thisWb.close();
+						}
+					});
+				},
+				register: function() {
+					var w = plus.webview.create('register.html', 'register', {}, {});
+					w.show("slide-in-right");
+				}
+			}
+		});
+		mui.init({
+			keyEventBind: {
+				backbutton: true //开启back按键监听
+			}
+		});
+		
+		mui.plusReady(function() {
+			
+		});
+		var clickNum = 0;
+		mui.back = function(event) {
+			clickNum++;
+			if(clickNum > 1) {
+				plus.runtime.quit();
+			} else {
+				mui.toast("再按一次退出应用");
+			}
+			setTimeout(function() {
+				clickNum = 0
+			}, 2000);
+			return false;
+		}
+	</script>
+</html>
